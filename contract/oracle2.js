@@ -350,14 +350,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        node: NODE_ID,
-        address: wallet ? wallet.address : null,
-        connectedToBlockchain: provider && wallet && contract ? true : false,
-        pendingRequestsCount: Object.keys(requestsDB).length,
-        timestamp: new Date().toISOString()
-    });
+    res.status(200).send();
 });
 
 // Main function
