@@ -2,5 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { LootBox__factory } from "./LootBox__factory";
-export { Mixer__factory } from "./Mixer__factory";
 export { MixerMerkleRoot__factory } from "./MixerMerkleRoot__factory";

@@ -30,7 +30,5 @@ export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
 export type { LootBox } from "./contracts/LootBox";
 export { LootBox__factory } from "./factories/contracts/LootBox__factory";
-export type { Mixer } from "./contracts/Mixer";
-export { Mixer__factory } from "./factories/contracts/Mixer__factory";
 export type { MixerMerkleRoot } from "./contracts/MixerMerkleRoot";
 export { MixerMerkleRoot__factory } from "./factories/contracts/MixerMerkleRoot__factory";

@@ -9,5 +9,30 @@
     "fulfillmentTx": "0x1caecc7c23563aaca83d60e8e500b8d8153181c8030b81e99eaee38be9abf094",
     "fulfillmentBlock": 21537188,
     "timestamp": "2025-05-09T17:09:14.513Z"
+  },
+  "0x5fdef538bc2e96d7d91e5c73bb2c4f8fb959266eb6dbc2757ed0a64b7d94908e": {
+    "requester": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "boxId": "0x58eb87eb0099e9349443a45716ddc63fcd77b0b5667523e6c99aecdc76919fd7",
+    "status": "failed",
+    "error": "value out-of-bounds (argument=\"timestamp\", value=\"0x537b8d295095695528c6b57d82217ca3ec822f436c7104efaf66bf4bc8b7bce937b80ce29f733ca4c020ce645f7bc71c7340e4ffe3de3760adcf7ef4eaed47ae1b\", code=INVALID_ARGUMENT, version=6.13.5)",
+    "timestamp": "2025-05-09T20:01:05.114Z"
+  },
+  "0x0e74f03a53f1d90af17e77f949ecc668f87f6a0bc8eff337842ac6bd312d5ada": {
+    "requester": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "boxId": "0xe28501c7cf1c4daf5b9e38f53cb807ea923e5f388a5bd73f46e3c244c4b0553a",
+    "status": "failed",
+    "error": "contract.userNonces is not a function",
+    "timestamp": "2025-05-09T20:05:58.570Z"
+  },
+  "0x378f3d2de87e32372e79755792946d8b5546807c21035172621d032e7101c1f1": {
+    "requester": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "boxId": "0x31a8b25a3b7340f07f36863248e2bca292bb2eee157f289e7c8dbb3fddc4e1a2",
+    "numberOfWords": 1,
+    "randomWords": [
+      "96646845165302592350677678826256885765822008658113561007995386119636682666376"
+    ],
+    "fulfillmentTx": "0xd7d5599d3ece16ea6d6f0f333e0fde3df06ead3231da0740c31606af75713de9",
+    "fulfillmentBlock": 21537188,
+    "timestamp": "2025-05-09T20:07:18.203Z"
   }
 }

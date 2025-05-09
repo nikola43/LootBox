@@ -1,46 +1,6 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/Users/typhon/dev/taco/pdex-mixer/contract/contracts/Mixer.sol": {
-      "lastModificationDate": 1746652953958,
-      "contentHash": "02dfadc1bb0b222b2d0ba2345cd7a65f",
-      "sourceName": "contracts/Mixer.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 10
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/utils/structs/EnumerableSet.sol",
-        "@openzeppelin/contracts/security/ReentrancyGuard.sol",
-        "@openzeppelin/contracts/access/AccessControl.sol"
-      ],
-      "versionPragmas": [
-        "0.8.20"
-      ],
-      "artifacts": [
-        "Mixer"
-      ]
-    },
     "/Users/typhon/dev/taco/pdex-mixer/contract/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
       "lastModificationDate": 1746642625781,
       "contentHash": "1535f8c0c68463f8c1b5239f7584e71f",
@@ -673,8 +633,8 @@
       ]
     },
     "/Users/typhon/dev/taco/pdex-VRF/contract/contracts/LootBox.sol": {
-      "lastModificationDate": 1746809425638,
-      "contentHash": "58ac7edc3f2f52f6a21876a3e53b66da",
+      "lastModificationDate": 1746821174933,
+      "contentHash": "31f5c70d6ef3789831d7f7799a0e99fa",
       "sourceName": "contracts/LootBox.sol",
       "solcConfig": {
         "version": "0.8.20",

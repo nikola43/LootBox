@@ -32,6 +32,8 @@ export declare namespace LootBox {
     owner: AddressLike;
     prizeToken: AddressLike;
     prizeAmount: BigNumberish;
+    won: boolean;
+    payout: BigNumberish;
   };
 
   export type BoxStructOutput = [
@@ -41,7 +43,9 @@ export declare namespace LootBox {
     boxTier: bigint,
     owner: string,
     prizeToken: string,
-    prizeAmount: bigint
+    prizeAmount: bigint,
+    won: boolean,
+    payout: bigint
   ] & {
     id: string;
     boxType: bigint;
@@ -50,13 +54,17 @@ export declare namespace LootBox {
     owner: string;
     prizeToken: string;
     prizeAmount: bigint;
+    won: boolean;
+    payout: bigint;
   };
 }
 
 export interface LootBoxInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "SIGNATURE_EXPIRY"
       | "boxes"
+      | "claimPrize"
       | "createBox"
       | "deleteBox"
       | "freeBoxWinRate"
@@ -77,6 +85,7 @@ export interface LootBoxInterface extends Interface {
       | "totalBoxes"
       | "transferOwnership"
       | "updateBox"
+      | "userNonces"
   ): FunctionFragment;
 
   getEvent(
@@ -96,7 +105,15 @@ export interface LootBoxInterface extends Interface {
       | "UserWon"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "SIGNATURE_EXPIRY",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "boxes", values: [BytesLike]): string;
+  encodeFunctionData(
+    functionFragment: "claimPrize",
+    values: [BytesLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "createBox",
     values: [BigNumberish, BigNumberish, AddressLike, BigNumberish]
@@ -111,7 +128,14 @@ export interface LootBoxInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "fulfillRandomWords",
-    values: [BytesLike, BigNumberish[], BytesLike, AddressLike, BytesLike]
+    values: [
+      BytesLike,
+      BigNumberish[],
+      BytesLike,
+      AddressLike,
+      BigNumberish,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(functionFragment: "getBox", values: [BytesLike]): string;
   encodeFunctionData(
@@ -171,8 +195,17 @@ export interface LootBoxInterface extends Interface {
     functionFragment: "updateBox",
     values: [BytesLike, BigNumberish, BigNumberish, AddressLike, BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "userNonces",
+    values: [AddressLike]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "SIGNATURE_EXPIRY",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "boxes", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "claimPrize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "createBox", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "deleteBox", data: BytesLike): Result;
   decodeFunctionResult(
@@ -217,6 +250,7 @@ export interface LootBoxInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "updateBox", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "userNonces", data: BytesLike): Result;
 }
 
 export namespace BoxCreatedEvent {
@@ -358,19 +392,22 @@ export namespace RandomWordsRequestedEvent {
     requestId: BytesLike,
     requester: AddressLike,
     numberOfWords: BigNumberish,
-    boxId: BytesLike
+    boxId: BytesLike,
+    timestamp: BigNumberish
   ];
   export type OutputTuple = [
     requestId: string,
     requester: string,
     numberOfWords: bigint,
-    boxId: string
+    boxId: string,
+    timestamp: bigint
   ];
   export interface OutputObject {
     requestId: string;
     requester: string;
     numberOfWords: bigint;
     boxId: string;
+    timestamp: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -401,11 +438,11 @@ export namespace RefundedEvent {
 }
 
 export namespace UpdateOracleEvent {
-  export type InputTuple = [oldOracle: AddressLike, newOracle: AddressLike];
-  export type OutputTuple = [oldOracle: string, newOracle: string];
+  export type InputTuple = [oracle: AddressLike, enabled: boolean];
+  export type OutputTuple = [oracle: string, enabled: boolean];
   export interface OutputObject {
-    oldOracle: string;
-    newOracle: string;
+    oracle: string;
+    enabled: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -512,10 +549,22 @@ export interface LootBox extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  SIGNATURE_EXPIRY: TypedContractMethod<[], [bigint], "view">;
+
   boxes: TypedContractMethod<
     [arg0: BytesLike],
     [
-      [string, bigint, bigint, bigint, string, string, bigint] & {
+      [
+        string,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        string,
+        bigint,
+        boolean,
+        bigint
+      ] & {
         id: string;
         boxType: bigint;
         status: bigint;
@@ -523,10 +572,14 @@ export interface LootBox extends BaseContract {
         owner: string;
         prizeToken: string;
         prizeAmount: bigint;
+        won: boolean;
+        payout: bigint;
       }
     ],
     "view"
   >;
+
+  claimPrize: TypedContractMethod<[boxId: BytesLike], [void], "nonpayable">;
 
   createBox: TypedContractMethod<
     [
@@ -549,6 +602,7 @@ export interface LootBox extends BaseContract {
       _randomWords: BigNumberish[],
       boxId: BytesLike,
       requester: AddressLike,
+      timestamp: BigNumberish,
       signature: BytesLike
     ],
     [void],
@@ -594,7 +648,7 @@ export interface LootBox extends BaseContract {
   >;
 
   setOracle: TypedContractMethod<
-    [newOracle: AddressLike, enabled: boolean],
+    [oracle: AddressLike, enabled: boolean],
     [void],
     "nonpayable"
   >;
@@ -625,16 +679,31 @@ export interface LootBox extends BaseContract {
     "nonpayable"
   >;
 
+  userNonces: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
+    nameOrSignature: "SIGNATURE_EXPIRY"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "boxes"
   ): TypedContractMethod<
     [arg0: BytesLike],
     [
-      [string, bigint, bigint, bigint, string, string, bigint] & {
+      [
+        string,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        string,
+        bigint,
+        boolean,
+        bigint
+      ] & {
         id: string;
         boxType: bigint;
         status: bigint;
@@ -642,10 +711,15 @@ export interface LootBox extends BaseContract {
         owner: string;
         prizeToken: string;
         prizeAmount: bigint;
+        won: boolean;
+        payout: bigint;
       }
     ],
     "view"
   >;
+  getFunction(
+    nameOrSignature: "claimPrize"
+  ): TypedContractMethod<[boxId: BytesLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "createBox"
   ): TypedContractMethod<
@@ -672,6 +746,7 @@ export interface LootBox extends BaseContract {
       _randomWords: BigNumberish[],
       boxId: BytesLike,
       requester: AddressLike,
+      timestamp: BigNumberish,
       signature: BytesLike
     ],
     [void],
@@ -725,7 +800,7 @@ export interface LootBox extends BaseContract {
   getFunction(
     nameOrSignature: "setOracle"
   ): TypedContractMethod<
-    [newOracle: AddressLike, enabled: boolean],
+    [oracle: AddressLike, enabled: boolean],
     [void],
     "nonpayable"
   >;
@@ -755,6 +830,9 @@ export interface LootBox extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "userNonces"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
   getEvent(
     key: "BoxCreated"
@@ -926,7 +1004,7 @@ export interface LootBox extends BaseContract {
       RandomWordsFulfilledEvent.OutputObject
     >;
 
-    "RandomWordsRequested(bytes32,address,uint256,bytes32)": TypedContractEvent<
+    "RandomWordsRequested(bytes32,address,uint256,bytes32,uint256)": TypedContractEvent<
       RandomWordsRequestedEvent.InputTuple,
       RandomWordsRequestedEvent.OutputTuple,
       RandomWordsRequestedEvent.OutputObject
@@ -948,7 +1026,7 @@ export interface LootBox extends BaseContract {
       RefundedEvent.OutputObject
     >;
 
-    "UpdateOracle(address,address)": TypedContractEvent<
+    "UpdateOracle(address,bool)": TypedContractEvent<
       UpdateOracleEvent.InputTuple,
       UpdateOracleEvent.OutputTuple,
       UpdateOracleEvent.OutputObject

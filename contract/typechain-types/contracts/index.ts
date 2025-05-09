@@ -2,5 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { LootBox } from "./LootBox";
-export type { Mixer } from "./Mixer";
 export type { MixerMerkleRoot } from "./MixerMerkleRoot";

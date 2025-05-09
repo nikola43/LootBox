@@ -46,25 +46,30 @@ contract LootBox is
         address owner;
         address prizeToken;
         uint256 prizeAmount;
+        bool won;
+        uint256 payout;
     }
 
     mapping(bytes32 => bool) public pendingRequests;
     mapping(bytes32 => Box) public boxes;
     EnumerableSet.Bytes32Set private boxIds;
     mapping(address => bool) public oracles;
+    mapping(address => uint256) public userNonces;
+    uint256 public constant SIGNATURE_EXPIRY = 5 minutes;
 
     event RandomWordsRequested(
         bytes32 indexed requestId,
         address indexed requester,
         uint256 numberOfWords,
-        bytes32 indexed boxId
+        bytes32 indexed boxId,
+        uint256 timestamp
     );
     event RandomWordsFulfilled(
         bytes32 indexed requestId,
         uint256[] randomWords,
         bytes32 indexed boxId
     );
-    event UpdateOracle(address indexed oldOracle, address indexed newOracle);
+    event UpdateOracle(address indexed oracle, bool enabled);
     event BoxCreated(
         bytes32 indexed boxId,
         BoxType boxType,
@@ -111,6 +116,17 @@ contract LootBox is
         _;
     }
 
+    modifier validERC20(address token) {
+        if (token != address(0)) {
+            require(isContract(token), "Not a contract");
+            (bool success, ) = token.call(
+                abi.encodeWithSignature("balanceOf(address)", address(this))
+            );
+            require(success, "Not ERC20 compliant");
+        }
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -124,6 +140,7 @@ contract LootBox is
         );
         freeBoxWinRate = 30; // 30% win rate for free boxes
         paidBoxWinRate = 50; // 50% win rate for paid boxes
+        nonce = 0;
     }
 
     function totalBoxes() external view returns (uint256) {
@@ -156,11 +173,13 @@ contract LootBox is
         BoxTier boxTier,
         address prizeToken,
         uint256 prizeAmount
-    ) external payable onlyOwner {
+    ) external payable onlyOwner validERC20(prizeToken) {
         require(prizeAmount > 0, "Prize amount must be greater than zero");
 
-        bytes32 boxId = _generateBoxId();
-        require(!boxIds.contains(boxId), "Box ID already exists");
+        bytes32 boxId;
+        do {
+            boxId = _generateBoxId();
+        } while (boxIds.contains(boxId));
 
         // check if the box type is valid
         require(
@@ -195,7 +214,9 @@ contract LootBox is
             status: BoxStatus.CLOSED,
             owner: address(0),
             prizeToken: prizeToken,
-            prizeAmount: prizeAmount
+            prizeAmount: prizeAmount,
+            won: false,
+            payout: 0
         });
 
         boxIds.add(boxId);
@@ -228,7 +249,7 @@ contract LootBox is
         BoxTier boxTier,
         address prizeToken,
         uint256 prizeAmount
-    ) external onlyOwner {
+    ) external onlyOwner validERC20(prizeToken) {
         require(boxIds.contains(boxId), "Box ID not found");
         require(prizeAmount > 0, "Prize amount must be greater than zero");
         require(
@@ -253,10 +274,10 @@ contract LootBox is
         emit BoxUpdated(boxId, boxType, boxTier, prizeToken, prizeAmount);
     }
 
-    function setOracle(address newOracle, bool enabled) external onlyOwner {
-        require(newOracle != address(0), "Invalid oracle address");
-        emit UpdateOracle(newOracle, newOracle);
-        oracles[newOracle] = enabled;
+    function setOracle(address oracle, bool enabled) external onlyOwner {
+        require(oracle != address(0), "Invalid oracle address");
+        emit UpdateOracle(oracle, enabled);
+        oracles[oracle] = enabled;
     }
 
     function setWinRate(uint256 _newRate, BoxType boxType) external onlyOwner {
@@ -271,10 +292,10 @@ contract LootBox is
             "Win rate must be between 1 and 100"
         );
         if (boxType == BoxType.FREE) {
-            emit UpdateWinRate(freeBoxWinRate, _newRate, boxType);
+            emit UpdateWinRate(_newRate, freeBoxWinRate, boxType);
             freeBoxWinRate = _newRate;
         } else if (boxType == BoxType.PAID) {
-            emit UpdateWinRate(paidBoxWinRate, _newRate, boxType);
+            emit UpdateWinRate(_newRate, paidBoxWinRate, boxType);
             paidBoxWinRate = _newRate;
         } else {
             revert("Invalid box type");
@@ -310,7 +331,13 @@ contract LootBox is
         require(!pendingRequests[requestId], "Request ID exists");
 
         pendingRequests[requestId] = true;
-        emit RandomWordsRequested(requestId, msg.sender, numberOfWords, boxId);
+        emit RandomWordsRequested(
+            requestId,
+            msg.sender,
+            numberOfWords,
+            boxId,
+            block.timestamp
+        );
     }
 
     function fulfillRandomWords(
@@ -318,6 +345,7 @@ contract LootBox is
         uint256[] memory _randomWords,
         bytes32 boxId,
         address requester,
+        uint256 timestamp,
         bytes calldata signature
     ) external onlyOracle nonReentrant {
         if (!pendingRequests[requestId]) revert RequestNotFound();
@@ -328,6 +356,7 @@ contract LootBox is
                 boxId,
                 requester,
                 msg.sender,
+                timestamp,
                 signature
             )
         ) revert InvalidSignature();
@@ -337,10 +366,9 @@ contract LootBox is
         require(box.status == BoxStatus.CLOSED, "Already opened");
         require(box.owner == address(0), "Box has owner");
 
-        box.status = BoxStatus.OPEN;
         box.owner = requester;
 
-        // Calculate win chance based on box type: 30% for FREE, 50% for PAID
+        // Calculate win chance based on box type
         bool won;
         if (box.boxType == BoxType.FREE) {
             won = _randomWords[0] % 100 < freeBoxWinRate;
@@ -372,27 +400,50 @@ contract LootBox is
                 remainingPrize
             );
 
-            if (box.prizeToken == address(0)) {
-                _transferEther(payable(requester), payout);
-                if (remainingPrize > 0)
-                    _transferEther(payable(owner()), remainingPrize);
-                console.log("Transferred ether");
-            } else {
-                _transferTokens(box.prizeToken, requester, payout);
-                if (remainingPrize > 0)
-                    _transferTokens(box.prizeToken, owner(), remainingPrize);
-                console.log("Transferred tokens");
-            }
+            box.won = true;
+            box.payout = payout;
 
-            emit UserWon(boxId, requester, box.prizeToken, payout);
-            if (remainingPrize > 0)
+            // if there is a remaining prize, transfer it to the owner
+            if (remainingPrize > 0) {
+                _transferPrize(box.prizeToken, owner(), remainingPrize);
                 emit Refunded(boxId, box.prizeToken, remainingPrize);
+            }
+            emit UserWon(boxId, requester, box.prizeToken, payout);
         } else {
+            // Refund the owner if they didn't win
+            _transferPrize(box.prizeToken, owner(), box.prizeAmount);
             emit UserLost(boxId, requester);
+            emit Refunded(boxId, box.prizeToken, box.prizeAmount);
         }
-
         delete pendingRequests[requestId];
         emit RandomWordsFulfilled(requestId, _randomWords, boxId);
+    }
+
+    function _transferPrize(
+        address prizeToken,
+        address recipient,
+        uint256 amount
+    ) internal {
+        if (prizeToken == address(0)) {
+            _transferEther(payable(recipient), amount);
+        } else {
+            _transferTokens(prizeToken, recipient, amount);
+        }
+    }
+
+    function claimPrize(bytes32 boxId) external nonReentrant {
+        require(boxIds.contains(boxId), "Box ID not found");
+        Box storage box = boxes[boxId];
+        require(box.owner == msg.sender, "Not the owner");
+        require(box.status == BoxStatus.CLOSED, "Box already opened");
+        require(box.won, "user did not win this box");
+
+        box.status = BoxStatus.OPEN;
+        // boxIds.remove(boxId);
+
+        _transferPrize(box.prizeToken, msg.sender, box.payout);
+        emit BoxOpened(boxId, msg.sender);
+        // emit BoxDeleted(boxId);
     }
 
     function verifySignature(
@@ -401,14 +452,34 @@ contract LootBox is
         bytes32 boxId,
         address requester,
         address oracle,
+        uint256 timestamp,
         bytes calldata signature
-    ) internal pure returns (bool) {
+    ) internal returns (bool) {
+        // Get current nonce and increment
+        uint256 currentNonce = userNonces[requester];
+        require(
+            block.timestamp <= timestamp + SIGNATURE_EXPIRY,
+            "Signature expired"
+        );
+        require(timestamp <= block.timestamp, "Invalid timestamp");
+
         bytes32 messageHash = keccak256(
-            abi.encodePacked(requestId, _randomWords, boxId, requester, oracle)
+            abi.encodePacked(
+                requestId,
+                _randomWords,
+                boxId,
+                requester,
+                oracle,
+                currentNonce,
+                timestamp,
+                address(this)
+            )
         );
         bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(
             messageHash
         );
+        // Increment nonce for the user
+        userNonces[requester] = currentNonce + 1;
         return ECDSA.recover(ethSignedMessageHash, signature) == oracle;
     }
 
@@ -416,6 +487,7 @@ contract LootBox is
         randNumber = uint256(
             keccak256(abi.encodePacked(msg.sender, block.timestamp, randNumber))
         );
+        nonce = nonce + 1;
         return
             keccak256(
                 abi.encodePacked(
@@ -424,7 +496,7 @@ contract LootBox is
                     msg.sender,
                     address(this),
                     randNumber,
-                    nonce++
+                    nonce
                 )
             );
     }
@@ -451,7 +523,11 @@ contract LootBox is
      * @param token The ERC20 token to recover
      * @param to The address to send the recovered tokens to
      */
-    function recoverERC20(address token, address to, uint256 amount) external onlyOwner {
+    function recoverERC20(
+        address token,
+        address to,
+        uint256 amount
+    ) external onlyOwner nonReentrant {
         require(to != address(0), "Invalid address");
         uint256 balance = IERC20(token).balanceOf(address(this));
         require(balance > 0, "No tokens");
@@ -464,12 +540,23 @@ contract LootBox is
      * @param to The address to send the recovered eth to
      * @param amount The amount of ETH to recover
      */
-    function recoverEth(address to, uint256 amount) external onlyOwner {
+    function recoverEth(
+        address to,
+        uint256 amount
+    ) external onlyOwner nonReentrant {
         uint256 balance = address(this).balance;
         require(balance > 0, "No ETH");
         require(amount <= balance, "Amount exceeds balance");
-        (bool success, ) = to.call{value: balance}("");
+        (bool success, ) = to.call{value: amount}("");
         require(success, "Transfer failed");
+    }
+
+    function isContract(address _addr) private view returns (bool) {
+        uint32 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return (size > 0);
     }
 
     receive() external payable {}

@@ -62,10 +62,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LootBox__factory>;
     getContractFactory(
-      name: "Mixer",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Mixer__factory>;
-    getContractFactory(
       name: "MixerMerkleRoot",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MixerMerkleRoot__factory>;
@@ -131,11 +127,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.LootBox>;
     getContractAt(
-      name: "Mixer",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Mixer>;
-    getContractAt(
       name: "MixerMerkleRoot",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -189,10 +180,6 @@ declare module "hardhat/types/runtime" {
       name: "LootBox",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.LootBox>;
-    deployContract(
-      name: "Mixer",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Mixer>;
     deployContract(
       name: "MixerMerkleRoot",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -258,11 +245,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.LootBox>;
-    deployContract(
-      name: "Mixer",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Mixer>;
     deployContract(
       name: "MixerMerkleRoot",
       args: any[],

@@ -257,6 +257,12 @@
                 "internalType": "bytes32",
                 "name": "boxId",
                 "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
             }
         ],
         "name": "RandomWordsRequested",
@@ -293,14 +299,14 @@
             {
                 "indexed": true,
                 "internalType": "address",
-                "name": "oldOracle",
+                "name": "oracle",
                 "type": "address"
             },
             {
-                "indexed": true,
-                "internalType": "address",
-                "name": "newOracle",
-                "type": "address"
+                "indexed": false,
+                "internalType": "bool",
+                "name": "enabled",
+                "type": "bool"
             }
         ],
         "name": "UpdateOracle",
@@ -382,6 +388,19 @@
         "type": "event"
     },
     {
+        "inputs": [],
+        "name": "SIGNATURE_EXPIRY",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "bytes32",
@@ -425,9 +444,32 @@
                 "internalType": "uint256",
                 "name": "prizeAmount",
                 "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "won",
+                "type": "bool"
+            },
+            {
+                "internalType": "uint256",
+                "name": "payout",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "claimPrize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -507,6 +549,11 @@
                 "type": "address"
             },
             {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
                 "internalType": "bytes",
                 "name": "signature",
                 "type": "bytes"
@@ -562,6 +609,16 @@
                     {
                         "internalType": "uint256",
                         "name": "prizeAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "won",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "payout",
                         "type": "uint256"
                     }
                 ],
@@ -739,7 +796,7 @@
         "inputs": [
             {
                 "internalType": "address",
-                "name": "newOracle",
+                "name": "oracle",
                 "type": "address"
             },
             {
@@ -828,6 +885,25 @@
         "name": "updateBox",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "userNonces",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {

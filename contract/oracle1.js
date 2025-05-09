@@ -118,21 +118,43 @@ function generateRandomWords(count) {
 }
 
 // Sign random words for the new contract format which includes the oracle address
-async function signRandomWords(requestId, randomWords, boxId, requester) {
-    // Create message hash according to the contract's updated verifySignature function
-    // Note: We now include the oracle's address in the message hash
-    const messageHash = ethers.solidityPackedKeccak256(
-        ['bytes32', 'uint256[]', 'bytes32', 'address', 'address'],
-        [requestId, randomWords, boxId, requester, wallet.address]
-    );
+async function signRandomWords(requestId, randomWords, boxId, requester, timestamp) {
+    try {
+        // Get current nonce for this requester
+        const currentNonce = await contract.userNonces(requester);
 
-    // Sign the hash with the oracle's private key
-    const signature = await wallet.signMessage(ethers.getBytes(messageHash));
-    return signature;
+        log('debug', `Signing message with parameters:`, {
+            requestId,
+            randomWordsCount: randomWords.length,
+            boxId,
+            requester,
+            oracleAddress: wallet.address,
+            nonce: currentNonce.toString(),
+            timestamp,
+            contractAddress: contract.target
+        });
+
+        // Create message hash according to the contract's verifySignature function
+        const messageHash = ethers.solidityPackedKeccak256(
+            ['bytes32', 'uint256[]', 'bytes32', 'address', 'address', 'uint256', 'uint256', 'address'],
+            [requestId, randomWords, boxId, requester, wallet.address, currentNonce, timestamp, contract.target]
+        );
+
+        // Sign the hash with the oracle's private key
+        const signature = await wallet.signMessage(ethers.getBytes(messageHash));
+
+        log('debug', `Generated signature: ${signature}`);
+        return signature;
+    } catch (error) {
+        log('error', `Error signing random words: ${error.message}`, {
+            error: error.stack
+        });
+        throw error;
+    }
 }
 
 // Process a new randomness request
-async function processRequest(requestId, requester, numberOfWords, boxId, event) {
+async function processRequest(requestId, requester, numberOfWords, boxId, blockTimestamp, event) {
     try {
         // Check if we've already processed this request
         if (requestsDB[requestId]) {
@@ -156,6 +178,7 @@ async function processRequest(requestId, requester, numberOfWords, boxId, event)
             numberOfWords: typeof numberOfWords === 'bigint' ? numberOfWords.toString() : numberOfWords,
             boxId,
             blockNumber: event?.blockNumber,
+            blockTimestamp: event?.blockTimestamp,
             transactionHash: event?.transactionHash
         });
 
@@ -170,10 +193,16 @@ async function processRequest(requestId, requester, numberOfWords, boxId, event)
             randomWords: randomWords.map(word => word.toString())
         });
 
-        // Sign the random words with boxId and requester
-        const signature = await signRandomWords(requestIdStr, randomWords, boxId, requester);
-        log('debug', `Generated signature`, {
+        // Get current timestamp (in seconds)
+        const timestamp = blockTimestamp
+        // const timestamp = Math.floor(Date.now() / 1000);
+
+        // Sign the random words with boxId, requester, and timestamp
+        const signature = await signRandomWords(requestIdStr, randomWords, boxId, requester, timestamp);
+
+        log('debug', `Generated signature for fulfillment`, {
             requestId: requestIdStr,
+            timestamp,
             signature
         });
 
@@ -187,13 +216,15 @@ async function processRequest(requestId, requester, numberOfWords, boxId, event)
             return;
         }
 
-        // Submit the fulfillment transaction
+        // Submit the fulfillment transaction with the updated parameter order
         log('info', `Submitting fulfillment transaction for ${requestIdStr}`);
+
         const tx = await contract.fulfillRandomWords(
             requestIdStr,
-            randomWords,  // ethers v6 handles arrays of BigInts correctly
+            randomWords,
             boxId,
             requester,
+            timestamp,  // Make sure to include the timestamp
             signature,
             {
                 gasLimit: 500000
@@ -263,17 +294,18 @@ async function startListening() {
         log('debug', 'Created event filter', { filter: JSON.stringify(filter) });
 
         // Listen for RandomWordsRequested events
-        contract.on("RandomWordsRequested", (requestId, requester, numberOfWords, boxId, event) => {
+        contract.on("RandomWordsRequested", (requestId, requester, numberOfWords, boxId, timestamp, event) => {
             log('info', `New randomness request detected`, {
                 requestId: typeof requestId === 'object' ? requestId.toString() : requestId,
                 requester,
                 numberOfWords: typeof numberOfWords === 'bigint' ? numberOfWords.toString() : numberOfWords,
                 boxId,
+                timestamp: typeof timestamp === 'bigint' ? timestamp.toString() : timestamp,
                 blockNumber: event?.blockNumber
             });
 
             // Process the request
-            processRequest(requestId, requester, numberOfWords, boxId, event)
+            processRequest(requestId, requester, numberOfWords, boxId, timestamp, event)
                 .catch(error => {
                     log('error', `Error processing event`, {
                         error: error.message,
@@ -320,6 +352,7 @@ async function startListening() {
                     const requester = event.args[1]; // requester is the second arg
                     const numberOfWords = event.args[2]; // numberOfWords is the third arg
                     const boxId = event.args[3]; // boxId is the fourth arg
+                    const timestamp = event.args[4]; // timestamp is the fifth arg
 
                     // Convert requestId to string for db lookup
                     const requestIdStr = typeof requestId === 'string' ? requestId : requestId.toString();
@@ -328,7 +361,7 @@ async function startListening() {
                     const isPending = await contract.pendingRequests(requestIdStr);
                     if (isPending && !requestsDB[requestIdStr]) {
                         log('info', `Processing missed event from block ${event.blockNumber}`);
-                        await processRequest(requestId, requester, numberOfWords, boxId, event);
+                        await processRequest(requestId, requester, numberOfWords, boxId, timestamp, event);
                     }
                 } catch (error) {
                     log('error', `Error processing past event: ${error.message}`);
