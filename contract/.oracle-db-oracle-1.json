@@ -1,0 +1,13 @@
+{
+  "0x3b597122ed623bbd5077e37f247ece694642224efe48cc2e61bc99aa1e8d7738": {
+    "requester": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "boxId": "0xb052ae21ac93d1d551617eeae6f8e63f94aae385467624d2c0ec7f11b31f0082",
+    "numberOfWords": 1,
+    "randomWords": [
+      "110627915726940199295502822922316394312651521900145153189233841898097811172169"
+    ],
+    "fulfillmentTx": "0x1caecc7c23563aaca83d60e8e500b8d8153181c8030b81e99eaee38be9abf094",
+    "fulfillmentBlock": 21537188,
+    "timestamp": "2025-05-09T17:09:14.513Z"
+  }
+}

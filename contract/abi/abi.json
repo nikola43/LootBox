@@ -1,0 +1,837 @@
+[
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidInitialization",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidSignature",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotInitializing",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnableInvalidOwner",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "OwnableUnauthorizedAccount",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ReentrancyGuardReentrantCall",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "RequestNotFound",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "Unauthorized",
+        "type": "error"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "enum LootBox.BoxType",
+                "name": "boxType",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "enum LootBox.BoxStatus",
+                "name": "status",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "enum LootBox.BoxTier",
+                "name": "boxTier",
+                "type": "uint8"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "prizeToken",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "BoxCreated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "BoxDeleted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            }
+        ],
+        "name": "BoxOpened",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "enum LootBox.BoxType",
+                "name": "boxType",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "enum LootBox.BoxTier",
+                "name": "boxTier",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "prizeToken",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "BoxUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint64",
+                "name": "version",
+                "type": "uint64"
+            }
+        ],
+        "name": "Initialized",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "previousOwner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "requestId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "randomWords",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "RandomWordsFulfilled",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "requestId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "requester",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "numberOfWords",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "RandomWordsRequested",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "prizeToken",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "Refunded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "oldOracle",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newOracle",
+                "type": "address"
+            }
+        ],
+        "name": "UpdateOracle",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "newRate",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "oldRate",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "enum LootBox.BoxType",
+                "name": "boxType",
+                "type": "uint8"
+            }
+        ],
+        "name": "UpdateWinRate",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "loser",
+                "type": "address"
+            }
+        ],
+        "name": "UserLost",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "winner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "prizeToken",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "UserWon",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "boxes",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "id",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "enum LootBox.BoxType",
+                "name": "boxType",
+                "type": "uint8"
+            },
+            {
+                "internalType": "enum LootBox.BoxStatus",
+                "name": "status",
+                "type": "uint8"
+            },
+            {
+                "internalType": "enum LootBox.BoxTier",
+                "name": "boxTier",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "prizeToken",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "enum LootBox.BoxType",
+                "name": "boxType",
+                "type": "uint8"
+            },
+            {
+                "internalType": "enum LootBox.BoxTier",
+                "name": "boxTier",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "prizeToken",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "createBox",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "deleteBox",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "freeBoxWinRate",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "requestId",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256[]",
+                "name": "_randomWords",
+                "type": "uint256[]"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "address",
+                "name": "requester",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes",
+                "name": "signature",
+                "type": "bytes"
+            }
+        ],
+        "name": "fulfillRandomWords",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getBox",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "bytes32",
+                        "name": "id",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "enum LootBox.BoxType",
+                        "name": "boxType",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "enum LootBox.BoxStatus",
+                        "name": "status",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "enum LootBox.BoxTier",
+                        "name": "boxTier",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "owner",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "prizeToken",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "prizeAmount",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct LootBox.Box",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "index",
+                "type": "uint256"
+            }
+        ],
+        "name": "getBoxIdAt",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "oracles",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "paidBoxWinRate",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "pendingRequests",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "recoverERC20",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "recoverEth",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "numberOfWords",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "requestRandomWords",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "requestId",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newOracle",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "enabled",
+                "type": "bool"
+            }
+        ],
+        "name": "setOracle",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_newRate",
+                "type": "uint256"
+            },
+            {
+                "internalType": "enum LootBox.BoxType",
+                "name": "boxType",
+                "type": "uint8"
+            }
+        ],
+        "name": "setWinRate",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalBoxes",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "boxId",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "enum LootBox.BoxType",
+                "name": "boxType",
+                "type": "uint8"
+            },
+            {
+                "internalType": "enum LootBox.BoxTier",
+                "name": "boxTier",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "prizeToken",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "prizeAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "updateBox",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "stateMutability": "payable",
+        "type": "receive"
+    }
+]
