@@ -122,7 +122,10 @@ contract LootBox is
             (bool success, ) = token.call(
                 abi.encodeWithSignature("balanceOf(address)", address(this))
             );
-            require(success, "Not ERC20 compliant");
+            (bool success2, ) = token.call(
+                abi.encodeWithSignature("totalSupply()")
+            );
+            require(success && success2, "Not ERC20 compliant");
         }
         _;
     }
@@ -177,9 +180,10 @@ contract LootBox is
         require(prizeAmount > 0, "Prize amount must be greater than zero");
 
         bytes32 boxId;
-        do {
-            boxId = _generateBoxId();
-        } while (boxIds.contains(boxId));
+
+        boxId = _generateBoxId();
+        // check if the box ID already exists
+        require(!boxIds.contains(boxId), "Box ID already exists");
 
         // check if the box type is valid
         require(
@@ -411,9 +415,9 @@ contract LootBox is
             emit UserWon(boxId, requester, box.prizeToken, payout);
         } else {
             // Refund the owner if they didn't win
-            _transferPrize(box.prizeToken, owner(), box.prizeAmount);
+            // _transferPrize(box.prizeToken, owner(), box.prizeAmount);
             emit UserLost(boxId, requester);
-            emit Refunded(boxId, box.prizeToken, box.prizeAmount);
+            // emit Refunded(boxId, box.prizeToken, box.prizeAmount);
         }
         delete pendingRequests[requestId];
         emit RandomWordsFulfilled(requestId, _randomWords, boxId);
