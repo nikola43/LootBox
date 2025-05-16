@@ -22,7 +22,6 @@ const main = async () => {
 
   const requestRandomWordsTx = await LootBox.requestRandomWords(1, boxId);
   console.log(`requestRandomWords transaction hash: ${requestRandomWordsTx.hash}`);
-
 }
 
 main()
